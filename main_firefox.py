@@ -5,11 +5,11 @@ import base64
 import random
 from datetime import datetime
 from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.firefox.options import Options as FirefoxOptions
+from selenium.webdriver.firefox.service import Service as FirefoxService
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
-from webdriver_manager.chrome import ChromeDriverManager
+from webdriver_manager.firefox import GeckoDriverManager
 import subprocess
 
 # ---- Load config ----
@@ -28,19 +28,27 @@ def sanitize_filename(name):
     return "".join(c for c in name if c.isalnum() or c in (" ", "-", "_")).strip()
 
 def create_driver():
-    opts = Options()
-    opts.add_argument("--start-maximized")
-    opts.add_argument(f"--user-data-dir={USER_DATA_DIR}")
-    opts.add_argument(f"--profile-directory={PROFILE_NAME}")
-    opts.add_argument("--disable-blink-features=AutomationControlled")
-    #opts.add_argument("--headless=new")
-    opts.add_argument("--log-level=3")
-    opts.add_argument("--disable-logging")
-    opts.add_argument("--disable-gpu")
+    opts = FirefoxOptions()
+    opts.add_argument("--width=1280")
+    opts.add_argument("--height=800")
+    # opts.add_argument("--headless")  # Optional
 
-    service = Service(ChromeDriverManager().install())
-    service.log_output = subprocess.DEVNULL
-    return webdriver.Chrome(service=service, options=opts)
+    # Load profile if needed
+    profile_path = os.path.join(USER_DATA_DIR, PROFILE_NAME)
+    if os.path.isdir(profile_path):
+        opts.profile = profile_path
+
+    # Load Firefox extension if provided
+    extension_path = CONFIG.get("firefox_extension_path")
+    if extension_path and os.path.exists(extension_path):
+        profile = webdriver.FirefoxProfile()
+        profile.add_extension(extension=extension_path)
+        service = FirefoxService(executable_path=GeckoDriverManager().install())
+        return webdriver.Firefox(service=service, options=opts, firefox_profile=profile)
+
+    # No extension case
+    service = FirefoxService(executable_path=GeckoDriverManager().install())
+    return webdriver.Firefox(service=service, options=opts)
 
 def gentle_cleanup(driver):
     js = """
@@ -169,20 +177,6 @@ def fix_layout(driver):
     '''
     driver.execute_script(js)
 
-def save_page_as_pdf(driver, output_path):
-    pdf_data = driver.execute_cdp_cmd("Page.printToPDF", {
-        "printBackground": True,
-        "paperWidth": 5.8,
-        "paperHeight": 8.3,
-        "marginTop": 0.4,
-        "marginBottom": 0.4,
-        "marginLeft": 0.4,
-        "marginRight": 0.4,
-        "scale": 0.9,
-    })["data"]
-    with open(output_path, "wb") as f:
-        f.write(base64.b64decode(pdf_data))
-
 def clear_console():
     os.system('cls' if os.name == 'nt' else 'clear')
 
@@ -220,7 +214,10 @@ def main():
                 print("[DEBUG] Using gentle cleanup...")
                 gentle_cleanup(driver)
 
-            save_page_as_pdf(driver, filepath)
+            # Firefox workaround: Use print dialog to save PDF or use pyautogui to automate
+            print("[INFO] Please manually print the page to PDF using Firefox's print dialog.")
+            input("Press Enter after saving the PDF...")
+
             print("[DONE]\n")
             time.sleep(2)
 
