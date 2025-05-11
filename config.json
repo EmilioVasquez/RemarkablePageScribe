@@ -1,0 +1,7 @@
+{
+  "output_dir": "remarkable_pdfs",
+  "user_data_dir": "C:\\temp\\chrome_test",
+  "profile_name": "Default",
+  "cleanup_mode": "gentle",
+  "firefox_extension_path": "C:\\Users\\efv\\Desktop\\py_projects\\RemarkablePageScribe\\firefox_extensions\\ublock_origin-1.63.2.xpi"
+}
