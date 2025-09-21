@@ -1,10 +1,10 @@
 @echo off
 cd /d %~dp0
-call venv\Scripts\activate
 
-REM Redirect stderr to nul (silence internal Chrome/TF logs)
-python main.py 2>nul
+REM Activate virtual environment
+call venv\Scripts\activate.bat
+
+python main.py
 
 echo.
-echo Script finished. Press any key to exit.
-pause >nul
+pause

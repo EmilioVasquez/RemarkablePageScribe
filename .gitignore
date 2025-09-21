@@ -174,3 +174,5 @@ cython_debug/
 .pypirc
 
 /remarkable_pdfs
+downloaded_articles.txt
+.idea
